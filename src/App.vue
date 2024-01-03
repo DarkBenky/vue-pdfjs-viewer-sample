@@ -80,31 +80,28 @@ export default {
       const canvas = event.target;
       const rect = canvas.getBoundingClientRect();
       const x = event.clientX - rect.left;
+      console.log(event.clientX + " client x " + rect.left + " rect left " + x);
       const y = event.clientY - rect.top;
+
 
       // Check if an image is clicked
       this.images.forEach((image, index) => {
-        const imgX = image.x;
-        const imgY = image.y;
-        // const imgWidth = 100;
-        // const imgHeight = 100;
-
         console.log(image);
-
         if (image.clicked == false) {
           console.log("clicked on image " + index);
           this.images[index].clicked = true;
           this.activeImageIndex = index;
 
-          // Calculate offset to maintain relative position while dragging
-          this.offsetX = x - imgX;
-          this.offsetY = y - imgY;
+          this.images[index].x = x;
+          this.images[index].y = y;
 
-          this.isDragging = true;
           image.clicked = true;
         }
       });
       console.log(this.images);
+      // TODO : why we need to call this twice ???
+      this.file_load();
+      this.file_load();
     },
     handleMouseMove(event) {
       if (this.isDragging) {
