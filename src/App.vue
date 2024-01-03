@@ -1,6 +1,11 @@
 <template>
-  <h1>i am asking my self</h1>
-  <canvas id="theCanvas"></canvas>
+  <div>
+    <h1>i am asking my self</h1>
+    <input type="file" @change="handleImageUpload" accept="image/*" />
+    <canvas id="theCanvas" @click="handleCanvasClick" @mousemove="handleMouseMove" @mouseup="handleMouseUp"></canvas>
+    <!-- TODO : fix rendering of images -->
+    <button @click="file_load">render images</button>
+  </div>
 </template>
 
 <script>
@@ -10,9 +15,20 @@ import "pdfjs-dist/build/pdf.worker.mjs";
 export default {
   name: 'App',
   components: {},
+  data() {
+    return {
+      pdfPath: "dummy.pdf",
+      images: [
+      ],
+      activeImageIndex: 0,
+      offsetX: 0,
+      offsetY: 0,
+      isDragging: false,
+    };
+  },
   methods: {
     async file_load() {
-      const pdfPath = "dummy.pdf";
+      const pdfPath = this.pdfPath;
 
       // Setting worker path to worker bundle.
       pdfjsLib.GlobalWorkerOptions.workerSrc = "/node_modules/pdfjs-dist/build/pdf.worker.mjs";
@@ -38,15 +54,75 @@ export default {
       });
       await renderTask.promise;
 
-      // Add an image to the canvas after the PDF rendering is complete
-      const img = new Image();
-      img.src = "logo.png"; // Replace with the path to your image
-      await new Promise((resolve) => {
-        img.onload = resolve;
+      // Draw all images on the canvas
+      this.images.forEach((image) => {
+        if (image.src) {
+          const img = new Image();
+          img.src = image.src;
+          console.log(image.src + " " + image.x + " " + image.y);
+          ctx.drawImage(img, image.x, image.y, image.size_x, image.size_y);
+        }
       });
+    },
+    handleImageUpload(event) {
+      console.log("adding image ");
+      const file = event.target.files[0];
+      if (file) {
+        // const imageSrc = URL.createObjectURL(file);
+        this.images.push({ src: "logo.png", x: 0, y: 0, clicked: false , size_x: 100, size_y: 100});
+        // Reset the file input to allow uploading the same file again
+        event.target.value = null;
+        // Trigger a redraw of the canvas to reflect the new image
+        // this.file_load();
+      }
+    },
+    handleCanvasClick(event) {
+      const canvas = event.target;
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
 
-      // Draw the image on the canvas
-      ctx.drawImage(img, 100, 100, 100, 100);
+      // Check if an image is clicked
+      this.images.forEach((image, index) => {
+        const imgX = image.x;
+        const imgY = image.y;
+        // const imgWidth = 100;
+        // const imgHeight = 100;
+
+        console.log(image);
+
+        if (image.clicked == false) {
+          console.log("clicked on image " + index);
+          this.images[index].clicked = true;
+          this.activeImageIndex = index;
+
+          // Calculate offset to maintain relative position while dragging
+          this.offsetX = x - imgX;
+          this.offsetY = y - imgY;
+
+          this.isDragging = true;
+          image.clicked = true;
+        }
+      });
+      console.log(this.images);
+    },
+    handleMouseMove(event) {
+      if (this.isDragging) {
+        const canvas = event.target;
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        // Update the position of the active image
+        this.images[this.activeImageIndex].x = x - this.offsetX;
+        this.images[this.activeImageIndex].y = y - this.offsetY;
+
+        // Redraw the canvas
+        // this.file_load();
+      }
+    },
+    handleMouseUp() {
+      this.isDragging = false;
     },
   },
   mounted() {
@@ -54,3 +130,9 @@ export default {
   },
 };
 </script>
+
+<style>
+body {
+  background-color: black;
+}
+</style>
