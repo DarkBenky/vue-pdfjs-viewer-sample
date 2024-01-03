@@ -46,7 +46,7 @@ export default {
       });
 
       // Draw the image on the canvas
-      ctx.drawImage(img, 100, 100, 100, 100);
+      ctx.drawImage(img, 0, 0, 100, 100);
     },
   },
   mounted() {
@@ -54,3 +54,9 @@ export default {
   },
 };
 </script>
+
+<style>
+#theCanvas {
+  border: 3px solid black;
+}
+</style>
