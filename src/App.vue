@@ -1,22 +1,26 @@
 <template>
 	<div>
 		<h1>i am asking my self</h1>
-		<input type="file" @change="handleImageUpload" accept="image/*" />
-		<canvas
-			id="theCanvas"
-			@click="handleCanvasClick"
-			@mousemove="handleMouseMove"
-			@mouseup="handleMouseUp"
-			@mousedown="handleMouseDown"
-		></canvas>
+		<!-- <input type="file" @change="handleImageUpload" accept="image/*" /> -->
+		<canvas id="theCanvas" @click="handleCanvasClick" @mousemove="handleMouseMove" @mouseup="handleMouseUp"
+			@mousedown="handleMouseDown"></canvas>
 		<div v-for="(overlay, index) in this.overlays" :key="index">
 			<!-- TODO add rendering of multiple overlays -->
-      <div :style="{ left: overlay.left, top: overlay.top, width: overlay.width, height: overlay.height, position: 'absolute', backgroundColor: 'red', opacity: '0.3' }"></div>
+			<div :style="{
+				left: overlay.left,
+				top: overlay.top,
+				width: overlay.width,
+				height: overlay.height,
+				position: 'absolute',
+				backgroundImage: 'url(' + overlay.img + ')',
+				backgroundSize: 'cover',
+				opacity: '0.3'
+			}"></div>
 		</div>
-    <button @click="addOverlay">add overlay</button>
+		<button @click="addOverlay">add overlay</button>
 		<div id="redOverlay" ref="redOverlay"></div>
-		<!-- TODO : fix rendering of images -->
-		<button @click="file_load">render images</button>
+		<input type="file" ref="fileInput" accept="image/*" @change="handleFileChange" />
+		<!-- <button @click="file_load">render images</button> -->
 	</div>
 </template>
 
@@ -35,12 +39,13 @@ export default {
 			activeImageIndex: 0,
 			offsetX: 0,
 			offsetY: 0,
-      isDragging: false,
-      overlay: false,
-      left: 0,
-      top: 0,
-      width: 0,
-      height: 0,
+			isDragging: false,
+			overlay: false,
+			left: 0,
+			top: 0,
+			width: 0,
+			height: 0,
+			currentImage: NaN,
 		};
 	},
 	methods: {
@@ -87,62 +92,64 @@ export default {
 					);
 				}
 			});
-    },
-    addOverlay(){
-      this.overlay = true
-      console.log(this.overlay)
-    },
-		handleImageUpload(event) {
-			console.log("adding image ");
-			const file = event.target.files[0];
-			if (file) {
-				// const imageSrc = URL.createObjectURL(file);
-				this.images.push({
-					src: "logo.png",
-					x: 0,
-					y: 0,
-					clicked: false,
-					size_x: 100,
-					size_y: 100,
-				});
-				// Reset the file input to allow uploading the same file again
-				event.target.value = null;
-				// Trigger a redraw of the canvas to reflect the new image
-				// this.file_load();
+		},
+		addOverlay() {
+			this.overlay = true
+			console.log(this.overlay)
+		},
+
+		handleFileChange(event) {
+			// Handle the file change event here
+			const selectedFile = event.target.files[0];
+
+			// Check if a file is selected
+			if (selectedFile) {
+				// Read the file as a data URL
+				const reader = new FileReader();
+				reader.onload = () => {
+					// Add the data URL to the images array
+					this.currentImage = reader.result;
+				};
+
+				reader.readAsDataURL(selectedFile);
 			}
 		},
-		handleCanvasClick(event) {
-			const canvas = event.target;
-			const rect = canvas.getBoundingClientRect();
-			const x = event.clientX - rect.left;
-			const y = event.clientY - rect.top;
+
+		// handleCanvasClick(...) {
+			// const canvas = event.target;
+			// const rect = canvas.getBoundingClientRect();
+			// const x = event.clientX - rect.left;
+			// const y = event.clientY - rect.top;
+			// image.clicked = true;
 
 			// Draw a red div overlay
-			const redOverlay = this.$refs.redOverlay;
-			redOverlay.style.position = "absolute";
-			redOverlay.style.backgroundColor = "red";
-			redOverlay.style.opacity = "0.3";
+			// const redOverlay = this.$refs.redOverlay;
+			// redOverlay.style.position = "absolute";
+			// // redOverlay.style.backgroundColor = "red";
+			// redOverlay.style.backgroundImage = 'url(' + this.currentImage + ')';
+			// redOverlay.style.backgroundSize = 'cover';
+			// redOverlay.style.opacity = "0.3";
 
 			// Check if an image is clicked
-			this.images.forEach((image, index) => {
-				console.log(image);
-				if (image.clicked == false) {
-					console.log("clicked on image " + index);
-					this.images[index].clicked = true;
-					this.activeImageIndex = index;
+			// this.images.forEach((image, index) => {
+			// 	console.log(image);
+			// 	if (image.clicked == false) {
+			// 		console.log("clicked on image " + index);
+			// 		this.images[index].clicked = true;
+			// 		this.activeImageIndex = index;
 
-					this.images[index].x = x;
-					this.images[index].y = y;
+			// 		this.images[index].x = x;
+			// 		this.images[index].y = y;
 
-					image.clicked = true;
-				}
-			});
-			console.log(this.images);
+			// 		image.clicked = true;
+			// 	}
+			// });
+			// console.log(this.images);
 			// TODO : why we need to call this twice ???
 			// this.file_load();
 			// this.file_load();
-		},
-    handleMouseMove(event) {
+		// },
+		handleMouseMove(event) {
 			if (this.isDragging && this.overlay) {
 				// const canvas = event.target;
 				// const rect = canvas.getBoundingClientRect();
@@ -162,15 +169,21 @@ export default {
 				const width = Math.abs(endX - startX);
 				const height = Math.abs(endY - startY);
 
+				redOverlay.style.position = "absolute";
 				redOverlay.style.left = `${minX}px`;
 				redOverlay.style.top = `${minY}px`;
 				redOverlay.style.width = `${width}px`;
-        redOverlay.style.height = `${height}px`;
+				redOverlay.style.height = `${height}px`;
+				redOverlay.style.backgroundImage = 'url(' + this.currentImage + ')';
+				redOverlay.style.backgroundSize = 'cover';
+				redOverlay.style.opacity = "0.3";
 
-        this.left = `${minX}px`;
-        this.top = `${minY}px`;
-        this.width = `${width}px`;
-        this.height = `${height}px`;
+
+				this.left = `${minX}px`;
+				this.top = `${minY}px`;
+				this.width = `${width}px`;
+				this.height = `${height}px`;
+				this.img = this.currentImage;
 			}
 		},
 		handleMouseDown(event) {
@@ -178,15 +191,15 @@ export default {
 			// const rect = canvas.getBoundingClientRect();
 			this.dragStartX = event.clientX;
 			this.dragStartY = event.clientY;
-      this.isDragging = true;
+			this.isDragging = true;
 		},
-    handleMouseUp() {
-      if (this.overlay) {
-        this.isDragging = false;
-        this.overlay = false;
-        this.overlays.push({ "left": this.left, "top": this.top, "width": this.width, "height": this.height });
-        console.log(this.overlays); 
-      }
+		handleMouseUp() {
+			if (this.overlay) {
+				this.isDragging = false;
+				this.overlay = false;
+				this.overlays.push({ "left": this.left, "top": this.top, "width": this.width, "height": this.height, img: this.currentImage });
+				console.log(this.overlays);
+			}
 		},
 	},
 	mounted() {
