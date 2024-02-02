@@ -1,11 +1,9 @@
 <template>
 	<div>
 		<h1>i am asking my self</h1>
-		<!-- <input type="file" @change="handleImageUpload" accept="image/*" /> -->
 		<canvas id="theCanvas" @click="handleCanvasClick" @mousemove="handleMouseMove" @mouseup="handleMouseUp"
 			@mousedown="handleMouseDown"></canvas>
 		<div v-for="(overlay, index) in this.overlays" :key="index">
-			<!-- TODO add rendering of multiple overlays -->
 			<div :style="{
 				left: overlay.left,
 				top: overlay.top,
@@ -17,10 +15,18 @@
 				opacity: '0.3'
 			}"></div>
 		</div>
+		<div v-for="(overlay, index) in this.overlays" :key="index">
+			<div :style="{
+				backgroundImage: 'url(' + overlay.img + ')',
+				width: '200px',
+				height: '200px',
+			}">
+			<button @click="delete_image(index)">delete</button>
+		</div>
+		</div>
 		<button @click="addOverlay">add overlay</button>
 		<div id="redOverlay" ref="redOverlay"></div>
 		<input type="file" ref="fileInput" accept="image/*" @change="handleFileChange" />
-		<!-- <button @click="file_load">render images</button> -->
 	</div>
 </template>
 
@@ -98,6 +104,10 @@ export default {
 			console.log(this.overlay)
 		},
 
+		delete_image(index) {
+			this.overlays.splice(index, 1);
+		},
+
 		handleFileChange(event) {
 			// Handle the file change event here
 			const selectedFile = event.target.files[0];
@@ -114,41 +124,6 @@ export default {
 				reader.readAsDataURL(selectedFile);
 			}
 		},
-
-		// handleCanvasClick(...) {
-			// const canvas = event.target;
-			// const rect = canvas.getBoundingClientRect();
-			// const x = event.clientX - rect.left;
-			// const y = event.clientY - rect.top;
-			// image.clicked = true;
-
-			// Draw a red div overlay
-			// const redOverlay = this.$refs.redOverlay;
-			// redOverlay.style.position = "absolute";
-			// // redOverlay.style.backgroundColor = "red";
-			// redOverlay.style.backgroundImage = 'url(' + this.currentImage + ')';
-			// redOverlay.style.backgroundSize = 'cover';
-			// redOverlay.style.opacity = "0.3";
-
-			// Check if an image is clicked
-			// this.images.forEach((image, index) => {
-			// 	console.log(image);
-			// 	if (image.clicked == false) {
-			// 		console.log("clicked on image " + index);
-			// 		this.images[index].clicked = true;
-			// 		this.activeImageIndex = index;
-
-			// 		this.images[index].x = x;
-			// 		this.images[index].y = y;
-
-			// 		image.clicked = true;
-			// 	}
-			// });
-			// console.log(this.images);
-			// TODO : why we need to call this twice ???
-			// this.file_load();
-			// this.file_load();
-		// },
 		handleMouseMove(event) {
 			if (this.isDragging && this.overlay) {
 				// const canvas = event.target;
@@ -207,3 +182,9 @@ export default {
 	},
 };
 </script>
+
+<style>
+body {
+	background-color: rgb(66, 66, 66);
+}
+</style>
