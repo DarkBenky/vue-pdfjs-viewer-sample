@@ -15,18 +15,20 @@
 				opacity: '0.3'
 			}"></div>
 		</div>
-		<div v-for="(overlay, index) in this.overlays" :key="index">
-			<div :style="{
-				backgroundImage: 'url(' + overlay.low_res_img + ')',
-				width: '200px',
-				height: '200px',
-			}">
-				<button @click="delete_image(index)">delete</button>
-			</div>
-		</div>
+		
 		<button @click="addOverlay">add overlay</button>
 		<div id="redOverlay" ref="redOverlay"></div>
 		<input type="file" ref="fileInput" accept="image/*" @change="handleFileChange" />
+	</div>
+	<div v-for="(overlay, index) in this.overlays" :key="index">
+			<div :style="{
+				backgroundImage: 'url(' + overlay.low_res_img + ')',
+				backgroundSize: 'cover',
+				height: '100px',
+				width: '100px'
+			}">
+				<button @click="delete_image(index)">delete</button>
+			</div>
 	</div>
 </template>
 
