@@ -10,19 +10,19 @@
 				width: overlay.width,
 				height: overlay.height,
 				position: 'absolute',
-				backgroundImage: 'url(' + overlay.img + ')',
+				backgroundImage: 'url(' + overlay.low_res_img + ')',
 				backgroundSize: 'cover',
 				opacity: '0.3'
 			}"></div>
 		</div>
 		<div v-for="(overlay, index) in this.overlays" :key="index">
 			<div :style="{
-				backgroundImage: 'url(' + overlay.img + ')',
+				backgroundImage: 'url(' + overlay.low_res_img + ')',
 				width: '200px',
 				height: '200px',
 			}">
-			<button @click="delete_image(index)">delete</button>
-		</div>
+				<button @click="delete_image(index)">delete</button>
+			</div>
 		</div>
 		<button @click="addOverlay">add overlay</button>
 		<div id="redOverlay" ref="redOverlay"></div>
@@ -41,6 +41,7 @@ export default {
 		return {
 			pdfPath: "dummy.pdf",
 			images: [],
+			low_res_img: NaN,
 			overlays: [],
 			activeImageIndex: 0,
 			offsetX: 0,
@@ -116,9 +117,36 @@ export default {
 			if (selectedFile) {
 				// Read the file as a data URL
 				const reader = new FileReader();
+
 				reader.onload = () => {
-					// Add the data URL to the images array
-					this.currentImage = reader.result;
+					// Create an Image element for downsizing
+					const img = new Image();
+					img.src = reader.result;
+
+					img.onload = () => {
+						// Set the original image data URL
+						this.currentImage = reader.result;
+
+						// Set the new width and height for downscaling
+						const newWidth = 250;
+						const newHeight = (img.height / img.width) * newWidth;
+
+						// Create a canvas element to draw the downscaled image
+						const canvas = document.createElement('canvas');
+						const ctx = canvas.getContext('2d');
+
+						canvas.width = newWidth;
+						canvas.height = newHeight;
+
+						// Draw the image on the canvas with the new size
+						ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+						// Save the downscaled image as a data URL
+						const downscaledImage = canvas.toDataURL();
+
+						// Add the downscaled image data URL to the low_res_img array
+						this.low_res_img = downscaledImage;
+					};
 				};
 
 				reader.readAsDataURL(selectedFile);
@@ -172,7 +200,7 @@ export default {
 			if (this.overlay) {
 				this.isDragging = false;
 				this.overlay = false;
-				this.overlays.push({ "left": this.left, "top": this.top, "width": this.width, "height": this.height, img: this.currentImage });
+				this.overlays.push({ "left": this.left, "top": this.top, "width": this.width, "height": this.height, img: this.currentImage , "low_res_img": this.low_res_img });
 				console.log(this.overlays);
 			}
 		},
