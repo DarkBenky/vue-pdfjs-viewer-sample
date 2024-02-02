@@ -12,6 +12,8 @@
 				position: 'absolute',
 				backgroundImage: 'url(' + overlay.low_res_img + ')',
 				backgroundSize: 'cover',
+				backgroundRepeat: 'no-repeat',
+				backgroundPosition: 'center',
 				opacity: '0.3'
 			}"></div>
 		</div>
@@ -179,8 +181,10 @@ export default {
 				redOverlay.style.top = `${minY}px`;
 				redOverlay.style.width = `${width}px`;
 				redOverlay.style.height = `${height}px`;
-				redOverlay.style.backgroundImage = 'url(' + this.currentImage + ')';
+				redOverlay.style.backgroundImage = 'url(' + this.low_res_img + ')';
 				redOverlay.style.backgroundSize = 'cover';
+				redOverlay.style.backgroundRepeat = 'no-repeat';
+				redOverlay.style.backgroundPosition = 'center';
 				redOverlay.style.opacity = "0.3";
 
 
@@ -204,6 +208,8 @@ export default {
 				this.overlay = false;
 				this.overlays.push({ "left": this.left, "top": this.top, "width": this.width, "height": this.height, img: this.currentImage , "low_res_img": this.low_res_img });
 				console.log(this.overlays);
+				const redOverlay = this.$refs.redOverlay;
+				redOverlay.style.opacity = "0";
 			}
 		},
 	},
