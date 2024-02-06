@@ -3,7 +3,11 @@
 		<h1>i am asking my self</h1>
 		<canvas id="theCanvas" @click="handleCanvasClick" @mousemove="handleMouseMove" @mouseup="handleMouseUp"
 			@mousedown="handleMouseDown"></canvas>
-		<div v-for="(overlay, index) in this.overlays" :key="index">
+		<button @click="addOverlay">add overlay</button>
+		<div id="redOverlay" ref="redOverlay"></div>
+		<input type="file" ref="fileInput" accept="image/*" @change="handleFileChange" />
+	</div>
+	<div v-for="(overlay, index) in this.overlays" :key="index">
 			<div :style="{
 				left: overlay.left,
 				top: overlay.top,
@@ -11,21 +15,17 @@
 				height: overlay.height,
 				position: 'absolute',
 				backgroundImage: 'url(' + overlay.low_res_img + ')',
-				backgroundSize: 'cover',
+				backgroundSize: 'contain',
 				backgroundRepeat: 'no-repeat',
 				backgroundPosition: 'center',
-				opacity: '0.3'
+				opacity: '0.3',
+				pointerEvents: 'none'
 			}"></div>
-		</div>
-		
-		<button @click="addOverlay">add overlay</button>
-		<div id="redOverlay" ref="redOverlay"></div>
-		<input type="file" ref="fileInput" accept="image/*" @change="handleFileChange" />
 	</div>
 	<div v-for="(overlay, index) in this.overlays" :key="index">
 			<div :style="{
 				backgroundImage: 'url(' + overlay.low_res_img + ')',
-				backgroundSize: 'cover',
+				backgroundSize: 'contain',
 				height: '100px',
 				width: '100px'
 			}">
@@ -182,10 +182,11 @@ export default {
 				redOverlay.style.width = `${width}px`;
 				redOverlay.style.height = `${height}px`;
 				redOverlay.style.backgroundImage = 'url(' + this.low_res_img + ')';
-				redOverlay.style.backgroundSize = 'cover';
+				redOverlay.style.backgroundSize = 'contain';
 				redOverlay.style.backgroundRepeat = 'no-repeat';
 				redOverlay.style.backgroundPosition = 'center';
 				redOverlay.style.opacity = "0.3";
+				redOverlay.style.pointerEvents = 'none';
 
 
 				this.left = `${minX}px`;
