@@ -1,3 +1,4 @@
+<!-- move after select -->
 <template>
 	<div>
 		<h1>i am asking my self</h1>
@@ -5,32 +6,40 @@
 			@mousedown="handleMouseDown"></canvas>
 		<button @click="addOverlay">add overlay</button>
 		<div id="redOverlay" ref="redOverlay"></div>
+		<div id="BgOverlay" ref="BgOverlay"></div>
 		<input type="file" ref="fileInput" accept="image/*" @change="handleFileChange" />
 	</div>
 	<div v-for="(overlay, index) in this.overlays" :key="index">
-			<div :style="{
-				left: overlay.left,
-				top: overlay.top,
-				width: overlay.width,
-				height: overlay.height,
-				position: 'absolute',
-				backgroundImage: 'url(' + overlay.low_res_img + ')',
-				backgroundSize: 'contain',
-				backgroundRepeat: 'no-repeat',
-				backgroundPosition: 'center',
-				opacity: '0.3',
-				pointerEvents: 'none'
-			}"></div>
+		<div @mousedown="handleDragStart(index)" :style="{
+			left: overlay.left,
+			top: overlay.top,
+			width: overlay.width,
+			height: overlay.height,
+			position: 'absolute',
+			backgroundImage: 'url(' + overlay.low_res_img + ')',
+			backgroundSize: 'contain',
+			backgroundRepeat: 'no-repeat',
+			backgroundPosition: 'center',
+			opacity: '0.4',
+			pointerEvents: overlay.pointerEvents,
+			border: overlay.border_color,
+		}">
+		</div>
 	</div>
 	<div v-for="(overlay, index) in this.overlays" :key="index">
-			<div :style="{
-				backgroundImage: 'url(' + overlay.low_res_img + ')',
-				backgroundSize: 'contain',
-				height: '100px',
-				width: '100px'
-			}">
+		<div :style="{
+			backgroundImage: 'url(' + overlay.low_res_img + ')',
+			backgroundSize: 'contain',
+			height: '100px',
+			width: '100px'
+		}">
+			<button @click="handleEdit(index)">edit</button>
+			<div v-if="currentEdit === index">
 				<button @click="delete_image(index)">delete</button>
+				<button @click="handleScaling(index, 0.75)">-</button>
+				<button @click="handleScaling(index, 1.25)">+</button>
 			</div>
+		</div>
 	</div>
 </template>
 
@@ -57,6 +66,9 @@ export default {
 			width: 0,
 			height: 0,
 			currentImage: NaN,
+			currentEdit: NaN,
+			dragging : false,
+			indexDraggedImg: NaN,
 		};
 	},
 	methods: {
@@ -161,9 +173,6 @@ export default {
 				// const canvas = event.target;
 				// const rect = canvas.getBoundingClientRect();
 
-				// Update the position of the red div overlay
-				const redOverlay = this.$refs.redOverlay;
-
 				// Use canvas coordinates for both starting and ending positions
 				const startX = this.dragStartX;
 				const startY = this.dragStartY;
@@ -176,6 +185,20 @@ export default {
 				const width = Math.abs(endX - startX);
 				const height = Math.abs(endY - startY);
 
+				const BgOverlay = this.$refs.BgOverlay;
+
+				BgOverlay.style.position = "absolute";
+				BgOverlay.style.left = `${minX}px`;
+				BgOverlay.style.top = `${minY}px`;
+				BgOverlay.style.width = `${width}px`;
+				BgOverlay.style.height = `${height}px`;
+				BgOverlay.style.backgroundColor = 'red';
+				BgOverlay.style.opacity = "0.1";
+				BgOverlay.style.pointerEvents = 'none';
+
+				// Update the position of the red div overlay
+				const redOverlay = this.$refs.redOverlay;
+
 				redOverlay.style.position = "absolute";
 				redOverlay.style.left = `${minX}px`;
 				redOverlay.style.top = `${minY}px`;
@@ -187,7 +210,6 @@ export default {
 				redOverlay.style.backgroundPosition = 'center';
 				redOverlay.style.opacity = "0.3";
 				redOverlay.style.pointerEvents = 'none';
-
 
 				this.left = `${minX}px`;
 				this.top = `${minY}px`;
@@ -207,11 +229,36 @@ export default {
 			if (this.overlay) {
 				this.isDragging = false;
 				this.overlay = false;
-				this.overlays.push({ "left": this.left, "top": this.top, "width": this.width, "height": this.height, img: this.currentImage , "low_res_img": this.low_res_img });
+				this.overlays.push({ "left": this.left, "top": this.top, "width": this.width, "height": this.height, img: this.currentImage, "low_res_img": this.low_res_img, 'border_color': 'none' , 'pointerEvents': 'none' });
 				console.log(this.overlays);
 				const redOverlay = this.$refs.redOverlay;
 				redOverlay.style.opacity = "0";
+				const BgOverlay = this.$refs.BgOverlay;
+				BgOverlay.style.opacity = "0";
 			}
+		},
+		handleScaling(index, scale) {
+			const x = this.overlays[index].width.split(' ').map(value => parseInt(value, 10));
+			const y = this.overlays[index].height.split(' ').map(value => parseInt(value, 10));
+			this.overlays[index].width = x * scale + 'px';
+			this.overlays[index].height = y * scale + 'px';
+			// console.log(this.overlays[index].width, this.overlays[index].height);
+		},
+		handleEdit(index) {
+			this.currentEdit = index;
+			for (var i = 0; i < this.overlays.length; i++) {
+				if (i !== index) {
+					this.overlays[i].border_color = 'none';
+				}
+				else {
+					this.overlays[i].border_color = '2px solid red';
+					this.overlays[i].pointerEvents = 'auto';
+				}
+			}
+		},
+		handleDragStart(index) {
+			this.dragging = true;
+			this.indexDraggedImg = index;
 		},
 	},
 	mounted() {
