@@ -30,6 +30,8 @@
 		<div :style="{
 			backgroundImage: 'url(' + overlay.low_res_img + ')',
 			backgroundSize: 'contain',
+			backgroundRepeat: 'no-repeat',
+			backgroundPosition: 'center',
 			height: '100px',
 			width: '100px'
 		}">
@@ -239,28 +241,24 @@ export default {
 		handleScaling(index, scale) {
 			const x = this.overlays[index].width.split(' ').map(value => parseInt(value, 10));
 			const y = this.overlays[index].height.split(' ').map(value => parseInt(value, 10));
-			this.overlays[index].width = x * scale + 'px';
-			this.overlays[index].height = y * scale + 'px';
+			this.overlays[index].width = parseInt((x * scale)+1) + 'px';
+			this.overlays[index].height = parseInt((y * scale)+1) + 'px';
 			// console.log(this.overlays[index].width, this.overlays[index].height);
 		},
 		handleEdit(index) {
 			this.currentEdit = index;
-			for (var i = 0; i < this.overlays.length; i++) {
-				if (i !== index) {
-					this.overlays[i].border_color = 'none';
-				}
-				else {
-					this.overlays[i].border_color = '2px solid red';
-					this.overlays[i].pointerEvents = 'auto';
-				}
-			}
+			// Reset border_color for all overlays
+			this.overlays.forEach((overlay, i) => {
+				overlay.border_color = i === index ? '2px solid red' : 'none';
+				overlay.pointerEvents = i === index ? 'auto' : 'none';
+			});
 		},
 		handleDragStart(index) {
 			if (this.currentEdit === index) {
 				this.dragging = !this.dragging;
 				this.indexDraggedImg = index;
 				console.log(this.indexDraggedImg);
-				// this.overlays[index].pointerEvents = 'none';
+				this.overlays[index].pointerEvents = 'none';
 			}
 		},
 		handleDragging(event) {
@@ -268,13 +266,23 @@ export default {
 				// get mouse position
 				let mouseX = event.clientX;
 				let mouseY = event.clientY;
-				// set new image position
-				this.overlays[this.indexDraggedImg].left = `${mouseX + 2}px`;
-				this.overlays[this.indexDraggedImg].top = `${mouseY + 2}px`;
+
+				// Schedule the update using requestAnimationFrame
+				requestAnimationFrame(() => {
+					// set new image position
+					this.overlays[this.indexDraggedImg].left = `${mouseX + 5}px`;
+					this.overlays[this.indexDraggedImg].top = `${mouseY + 5}px`;
+				});
 			}
 		},
 		handleDraggingStop() {
-			this.dragging = false;
+			console.log(this.dragging);
+			console.log(this.indexDraggedImg);
+			if (this.dragging && !isNaN(this.indexDraggedImg)) {
+				this.dragging = false;
+				this.overlays[this.indexDraggedImg].pointerEvents = 'auto';
+				this.indexDraggedImg = NaN;
+			}
 		}
 	},
 	mounted() {
