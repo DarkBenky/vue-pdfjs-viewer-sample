@@ -1,6 +1,6 @@
 <!-- move after select -->
 <template>
-	<div>
+	<div @mousemove="handleDragging" @mousedown="handleDraggingStop">
 		<h1>i am asking my self</h1>
 		<canvas id="theCanvas" @click="handleCanvasClick" @mousemove="handleMouseMove" @mouseup="handleMouseUp"
 			@mousedown="handleMouseDown"></canvas>
@@ -56,7 +56,6 @@ export default {
 			images: [],
 			low_res_img: NaN,
 			overlays: [],
-			activeImageIndex: 0,
 			offsetX: 0,
 			offsetY: 0,
 			isDragging: false,
@@ -67,7 +66,7 @@ export default {
 			height: 0,
 			currentImage: NaN,
 			currentEdit: NaN,
-			dragging : false,
+			dragging: false,
 			indexDraggedImg: NaN,
 		};
 	},
@@ -229,7 +228,7 @@ export default {
 			if (this.overlay) {
 				this.isDragging = false;
 				this.overlay = false;
-				this.overlays.push({ "left": this.left, "top": this.top, "width": this.width, "height": this.height, img: this.currentImage, "low_res_img": this.low_res_img, 'border_color': 'none' , 'pointerEvents': 'none' });
+				this.overlays.push({ "left": this.left, "top": this.top, "width": this.width, "height": this.height, img: this.currentImage, "low_res_img": this.low_res_img, 'border_color': 'none', 'pointerEvents': 'none' });
 				console.log(this.overlays);
 				const redOverlay = this.$refs.redOverlay;
 				redOverlay.style.opacity = "0";
@@ -257,9 +256,26 @@ export default {
 			}
 		},
 		handleDragStart(index) {
-			this.dragging = true;
-			this.indexDraggedImg = index;
+			if (this.currentEdit === index) {
+				this.dragging = !this.dragging;
+				this.indexDraggedImg = index;
+				console.log(this.indexDraggedImg);
+				// this.overlays[index].pointerEvents = 'none';
+			}
 		},
+		handleDragging(event) {
+			if (this.dragging) {
+				// get mouse position
+				let mouseX = event.clientX;
+				let mouseY = event.clientY;
+				// set new image position
+				this.overlays[this.indexDraggedImg].left = `${mouseX + 2}px`;
+				this.overlays[this.indexDraggedImg].top = `${mouseY + 2}px`;
+			}
+		},
+		handleDraggingStop() {
+			this.dragging = false;
+		}
 	},
 	mounted() {
 		this.file_load();
