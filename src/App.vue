@@ -1,5 +1,9 @@
 <!-- move after select -->
 <template>
+	<div>
+		<button @click="handleNext">Next</button>
+		<button @click="handlePrevious">Previous</button>
+	</div>
 	<div @mousemove="handleDragging" @mousedown="handleDraggingStop">
 		<h1>i am asking my self</h1>
 		<canvas id="theCanvas" @click="handleCanvasClick" @mousemove="handleMouseMove" @mouseup="handleMouseUp"
@@ -10,7 +14,7 @@
 		<input type="file" ref="fileInput" accept="image/*" @change="handleFileChange" />
 	</div>
 	<div v-for="(overlay, index) in this.overlays" :key="index">
-		<div @mousedown="handleDragStart(index)" :style="{
+		<div v-if="overlay.page_number === this.page_number" @mousedown="handleDragStart(index)" :style="{
 			left: overlay.left,
 			top: overlay.top,
 			width: overlay.width,
@@ -27,7 +31,7 @@
 		</div>
 	</div>
 	<div v-for="(overlay, index) in this.overlays" :key="index">
-		<div :style="{
+		<div v-if="overlay.page_number === this.page_number" :style="{
 			backgroundImage: 'url(' + overlay.low_res_img + ')',
 			backgroundSize: 'contain',
 			backgroundRepeat: 'no-repeat',
@@ -54,7 +58,7 @@ export default {
 	components: {},
 	data() {
 		return {
-			pdfPath: "dummy.pdf",
+			pdfPath: "big-pdf.pdf",
 			images: [],
 			low_res_img: NaN,
 			overlays: [],
@@ -70,6 +74,7 @@ export default {
 			currentEdit: NaN,
 			dragging: false,
 			indexDraggedImg: NaN,
+			page_number: 1,
 		};
 	},
 	methods: {
@@ -85,7 +90,7 @@ export default {
 			const pdfDocument = await loadingTask.promise;
 
 			// Request a first page
-			const pdfPage = await pdfDocument.getPage(1);
+			const pdfPage = await pdfDocument.getPage(this.page_number);
 
 			// Display page on the existing canvas with 100% scale.
 			const viewport = pdfPage.getViewport({ scale: 1.0 });
@@ -170,7 +175,7 @@ export default {
 			}
 		},
 		handleMouseMove(event) {
-			if (this.isDragging && this.overlay) {
+			if (this.isDragging && this.overlay && this.currentImage) {
 				// const canvas = event.target;
 				// const rect = canvas.getBoundingClientRect();
 
@@ -220,17 +225,30 @@ export default {
 			}
 		},
 		handleMouseDown(event) {
+			console.log('handleMouseDown');
 			// const canvas = event.target;
 			// const rect = canvas.getBoundingClientRect();
-			this.dragStartX = event.clientX;
-			this.dragStartY = event.clientY;
-			this.isDragging = true;
+			if (isNaN(this.currentImage) && this.overlay) {
+				this.dragStartX = event.clientX;
+				this.dragStartY = event.clientY;
+				this.isDragging = true;
+			}
 		},
 		handleMouseUp() {
-			if (this.overlay) {
+			if (this.overlay && this.currentImage) {
 				this.isDragging = false;
 				this.overlay = false;
-				this.overlays.push({ "left": this.left, "top": this.top, "width": this.width, "height": this.height, img: this.currentImage, "low_res_img": this.low_res_img, 'border_color': 'none', 'pointerEvents': 'none' });
+				this.overlays.push({
+					"left": this.left,
+					"top": this.top,
+					"width": this.width,
+					"height": this.height,
+					img: this.currentImage,
+					"low_res_img": this.low_res_img,
+					'border_color': 'none',
+					'pointerEvents': 'none',
+					'page_number': this.page_number
+				});
 				console.log(this.overlays);
 				const redOverlay = this.$refs.redOverlay;
 				redOverlay.style.opacity = "0";
@@ -241,8 +259,8 @@ export default {
 		handleScaling(index, scale) {
 			const x = this.overlays[index].width.split(' ').map(value => parseInt(value, 10));
 			const y = this.overlays[index].height.split(' ').map(value => parseInt(value, 10));
-			this.overlays[index].width = parseInt((x * scale)+1) + 'px';
-			this.overlays[index].height = parseInt((y * scale)+1) + 'px';
+			this.overlays[index].width = parseInt((x * scale) + 1) + 'px';
+			this.overlays[index].height = parseInt((y * scale) + 1) + 'px';
 			// console.log(this.overlays[index].width, this.overlays[index].height);
 		},
 		handleEdit(index) {
@@ -283,7 +301,28 @@ export default {
 				this.overlays[this.indexDraggedImg].pointerEvents = 'auto';
 				this.indexDraggedImg = NaN;
 			}
-		}
+		},
+
+		handleNext() {
+			try {
+				this.page_number++;
+				this.file_load();
+			} catch (error) {
+				console.log(error);
+			}
+		},
+
+		handlePrevious() {
+			try {
+				if (this.page_number > 1) {
+					this.page_number--;
+					this.file_load();
+				}
+			} catch (error) {
+				console.log(error);
+			}
+
+		},
 	},
 	mounted() {
 		this.file_load();
