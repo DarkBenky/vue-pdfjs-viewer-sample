@@ -1,4 +1,4 @@
-<!-- move after select -->
+<!-- TODO: get number of pages and be able to move there -->
 <template>
 	<div>
 		<button @click="handleNext">Next</button>
