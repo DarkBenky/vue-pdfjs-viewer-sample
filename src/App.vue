@@ -6,7 +6,7 @@
 			<button @click="handleNext">Next</button>
 			<p>{{ page_number }} / {{ numberOfPages }} page</p>
 
-			<input id="pageNumber-input" type="number"/>
+			<input id="pageNumber-input" type="number" />
 			<button @click="handlePageChange">Go to page</button>
 		</div>
 		<button @click="exportData">export</button>
@@ -59,6 +59,7 @@
 <script>
 import * as pdfjsLib from "pdfjs-dist";
 import "pdfjs-dist/build/pdf.worker.mjs";
+import { saveAs } from 'file-saver';
 
 export default {
 	name: "App",
@@ -117,22 +118,23 @@ export default {
 			});
 			await renderTask.promise;
 
-			// Draw all images on the canvas
-			this.images.forEach((image) => {
-				if (image.src) {
-					const img = new Image();
-					img.src = image.src;
-					console.log(image.src + " " + image.x + " " + image.y);
-					ctx.drawImage(
-						img,
-						image.x,
-						image.y,
-						image.size_x,
-						image.size_y
-					);
-				}
-			});
+			// // Draw all images on the canvas
+			// this.images.forEach((image) => {
+			// 	if (image.src) {
+			// 		const img = new Image();
+			// 		img.src = image.src;
+			// 		console.log(image.src + " " + image.x + " " + image.y);
+			// 		ctx.drawImage(
+			// 			img,
+			// 			image.x,
+			// 			image.y,
+			// 			image.size_x,
+			// 			image.size_y
+			// 		);
+			// 	}
+			// });
 		},
+
 		addOverlay() {
 			this.overlay = true
 			console.log(this.overlay)
@@ -240,6 +242,7 @@ export default {
 			// const canvas = event.target;
 			// const rect = canvas.getBoundingClientRect();
 			if (isNaN(this.currentImage) && this.overlay) {
+				console.log('handleMouseDown - True');
 				this.dragStartX = event.clientX;
 				this.dragStartY = event.clientY;
 				this.isDragging = true;
@@ -334,14 +337,52 @@ export default {
 			}
 
 		},
+
+		async fetchRawPdfData(pdfPath) {
+			try {
+				const response = await fetch(pdfPath);
+				if (!response.ok) {
+					throw new Error(`Failed to fetch PDF data: ${response.status} - ${response.statusText}`);
+				}
+
+				const rawData = await response.blob();
+				console.log(rawData);
+
+				// Convert Blob to data URL
+				const dataUrl = await new Promise((resolve) => {
+					const reader = new FileReader();
+					reader.onloadend = () => resolve(reader.result);
+					reader.readAsDataURL(rawData);
+				});
+
+				return dataUrl;
+			} catch (error) {
+				throw new Error(`Error fetching raw PDF data: ${error.message}`);
+			}
+		},
+
 		exportData() {
 			console.log('export_data');
-			let data = {
-				'pdfPath': this.pdfPath,
-				'overlays': this.overlays
-			}
-			console.log(data);
-			// return JSON.parse(data);
+
+			// Fetch the raw PDF data
+			this.fetchRawPdfData(this.pdfPath)
+				.then(rawDataUrl => {
+					// Once the data is fetched, construct the data object
+					data_export  = []
+					let data = {
+						'overlays': this.overlays,
+						'PdfFile': rawDataUrl,
+					};
+
+					console.log(data);
+
+					// Save the data as a JSON file
+					let blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+					saveAs(blob, 'sample.json');
+				})
+				.catch(error => {
+					console.error('Error fetching raw PDF data:', error);
+				});
 		},
 		async handlePageChange() {
 			let pageNumber = document.getElementById('pageNumber-input').value;
