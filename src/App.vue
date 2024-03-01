@@ -1,8 +1,15 @@
 <!-- TODO: get number of pages and be able to move there -->
 <template>
 	<div>
-		<button @click="handleNext">Next</button>
-		<button @click="handlePrevious">Previous</button>
+		<div>
+			<button @click="handlePrevious">Previous</button>
+			<button @click="handleNext">Next</button>
+			<p>{{ page_number }} / {{ numberOfPages }} page</p>
+
+			<input id="pageNumber-input" type="number"/>
+			<button @click="handlePageChange">Go to page</button>
+		</div>
+		<button @click="exportData">export</button>
 	</div>
 	<div @mousemove="handleDragging" @mousedown="handleDraggingStop">
 		<h1>i am asking my self</h1>
@@ -75,6 +82,7 @@ export default {
 			dragging: false,
 			indexDraggedImg: NaN,
 			page_number: 1,
+			numberOfPages: NaN,
 		};
 	},
 	methods: {
@@ -88,6 +96,9 @@ export default {
 			// Loading a document.
 			const loadingTask = pdfjsLib.getDocument(pdfPath);
 			const pdfDocument = await loadingTask.promise;
+
+			// get number of pages
+			this.numberOfPages = pdfDocument.numPages;
 
 			// Request a first page
 			const pdfPage = await pdfDocument.getPage(this.page_number);
@@ -303,26 +314,46 @@ export default {
 			}
 		},
 
-		handleNext() {
+		async handleNext() {
 			try {
 				this.page_number++;
-				this.file_load();
+				await this.file_load();
 			} catch (error) {
 				console.log(error);
 			}
 		},
 
-		handlePrevious() {
+		async handlePrevious() {
 			try {
 				if (this.page_number > 1) {
 					this.page_number--;
-					this.file_load();
+					await this.file_load();
 				}
 			} catch (error) {
 				console.log(error);
 			}
 
 		},
+		exportData() {
+			console.log('export_data');
+			let data = {
+				'pdfPath': this.pdfPath,
+				'overlays': this.overlays
+			}
+			console.log(data);
+			// return JSON.parse(data);
+		},
+		async handlePageChange() {
+			let pageNumber = document.getElementById('pageNumber-input').value;
+			try {
+				if (pageNumber > 0 && pageNumber <= this.numberOfPages) {
+					this.page_number = parseInt(pageNumber);
+					await this.file_load();
+				}
+			} catch (error) {
+				console.log(error);
+			}
+		}
 	},
 	mounted() {
 		this.file_load();
