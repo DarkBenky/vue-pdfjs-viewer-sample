@@ -368,14 +368,25 @@ export default {
 			this.fetchRawPdfData(this.pdfPath)
 				.then(rawDataUrl => {
 					// Once the data is fetched, construct the data object
-					data_export  = []
+					let data_export = []
+					for (let i = 0; i < this.overlays.length; i++) {
+						let stripData = {
+							'left': this.overlays[i].left,
+							'top': this.overlays[i].top,
+							'width': this.overlays[i].width,
+							'height': this.overlays[i].height,
+							'image': this.overlays[i].img,
+							'pageNumber': this.overlays[i].page_number,
+
+						}
+						data_export.push(stripData)
+					}
 					let data = {
-						'overlays': this.overlays,
+						'Overlays': data_export,
 						'PdfFile': rawDataUrl,
 					};
 
 					console.log(data);
-
 					// Save the data as a JSON file
 					let blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
 					saveAs(blob, 'sample.json');
