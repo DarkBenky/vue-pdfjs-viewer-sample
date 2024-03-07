@@ -1,6 +1,8 @@
 <!-- TODO: get number of pages and be able to move there -->
+
 <template>
 	<div>
+		<button @click="calculateRealPosition">test</button>
 		<div>
 			<button @click="handlePrevious">Previous</button>
 			<button @click="handleNext">Next</button>
@@ -13,7 +15,7 @@
 	</div>
 	<div @mousemove="handleDragging" @mousedown="handleDraggingStop">
 		<h1>i am asking my self</h1>
-		<canvas id="theCanvas" @click="handleCanvasClick" @mousemove="handleMouseMove" @mouseup="handleMouseUp"
+		<canvas ref="canvas" id="theCanvas" @click="handleCanvasClick" @mousemove="handleMouseMove" @mouseup="handleMouseUp"
 			@mousedown="handleMouseDown"></canvas>
 		<button @click="addOverlay">add overlay</button>
 		<div id="redOverlay" ref="redOverlay"></div>
@@ -84,6 +86,7 @@ export default {
 			indexDraggedImg: NaN,
 			page_number: 1,
 			numberOfPages: NaN,
+			aspectRatio: NaN
 		};
 	},
 	methods: {
@@ -161,6 +164,7 @@ export default {
 					img.onload = () => {
 						// Set the original image data URL
 						this.currentImage = reader.result;
+						this.aspectRatio = img.width / img.height;
 
 						// Set the new width and height for downscaling
 						const newWidth = 250;
@@ -248,6 +252,65 @@ export default {
 				this.isDragging = true;
 			}
 		},
+
+		drawPoint(x, y) {
+			const ctx = this.$refs.canvas.getContext("2d");
+			ctx.beginPath();
+			ctx.arc(x, y, 5, 0, 2 * Math.PI);
+			ctx.fillStyle = "red";
+			ctx.fill();
+			ctx.closePath();
+		},
+
+		calculateRealPosition() {
+			const realPoint = [];
+			for (let i = 0; i < this.overlays.length; i++) {
+				const overlay = this.overlays[i];
+				const left = overlay.left.split(' ').map(value => parseInt(value, 10))[0];
+				const top = overlay.top.split(' ').map(value => parseInt(value, 10))[0];
+				const width = overlay.width.split(' ').map(value => parseInt(value, 10))[0];
+				const height = overlay.height.split(' ').map(value => parseInt(value, 10))[0];
+				const bottom = top + height;
+				const right = left + width;
+				const aspectRatio = overlay.aspectRatio;
+
+				console.log('left', left, 'top', top, 'width', width, 'height', height, 'bottom', bottom, 'right', right, 'aspectRatio', aspectRatio);
+
+				const mid = {
+					x: (left + right) / 2,
+					y: (top + bottom) / 2
+				};
+
+				// Calculate maximum rectangle that maintains the aspect ratio
+				let maxImageWidth, maxImageHeight;
+				const boxAspectRatio = width / height;
+
+				if (boxAspectRatio > aspectRatio) {
+					// The box is wider than the desired aspect ratio
+					maxImageWidth = width;
+					maxImageHeight = width / aspectRatio;
+				} else {
+					// The box is taller than the desired aspect ratio
+					maxImageHeight = height;
+					maxImageWidth = height * aspectRatio;
+				}
+
+				// Calculate left and top for the maximum rectangle
+				const imageSize = {
+					left: mid.x - maxImageWidth / 2,
+					top: mid.y - maxImageHeight / 2,
+					width: maxImageWidth,
+					height: maxImageHeight
+				};
+				this.drawPoint(imageSize.left, imageSize.top);
+				this.drawPoint(imageSize.left + imageSize.width, imageSize.top);
+				this.drawPoint(imageSize.left + imageSize.width, imageSize.top + imageSize.height);
+				this.drawPoint(imageSize.left, imageSize.top + imageSize.height);
+				realPoint.push(imageSize);
+				console.log(imageSize);
+			}
+		},
+
 		handleMouseUp() {
 			if (this.overlay && this.currentImage) {
 				this.isDragging = false;
@@ -261,7 +324,8 @@ export default {
 					"low_res_img": this.low_res_img,
 					'border_color': 'none',
 					'pointerEvents': 'none',
-					'page_number': this.page_number
+					'page_number': this.page_number,
+					'aspectRatio': this.aspectRatio,
 				});
 				console.log(this.overlays);
 				const redOverlay = this.$refs.redOverlay;
@@ -377,7 +441,6 @@ export default {
 							'height': this.overlays[i].height,
 							'image': this.overlays[i].img,
 							'pageNumber': this.overlays[i].page_number,
-
 						}
 						data_export.push(stripData)
 					}
