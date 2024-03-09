@@ -15,8 +15,8 @@
 	</div>
 	<div @mousemove="handleDragging" @mousedown="handleDraggingStop">
 		<h1>i am asking my self</h1>
-		<canvas ref="canvas" id="theCanvas" @click="handleCanvasClick" @mousemove="handleMouseMove" @mouseup="handleMouseUp"
-			@mousedown="handleMouseDown"></canvas>
+		<canvas ref="canvas" id="theCanvas" @click="handleCanvasClick" @mousemove="handleMouseMove"
+			@mouseup="handleMouseUp" @mousedown="handleMouseDown"></canvas>
 		<button @click="addOverlay">add overlay</button>
 		<div id="redOverlay" ref="redOverlay"></div>
 		<div id="BgOverlay" ref="BgOverlay"></div>
@@ -37,6 +37,23 @@
 			pointerEvents: overlay.pointerEvents,
 			border: overlay.border_color,
 		}">
+		</div>
+	</div>
+	<div v-if="this.realPoint">
+		<!-- debugging of img position -->
+		<div v-for="(box, index) in this.realPoint" :key="index">
+			<!-- <p>{{ box }}</p> -->
+			<div :style="{
+			left: box.left + 'px',
+			top: box.top + 'px',
+			width: box.width + 'px',
+			height: box.height + 'px',
+			position: 'absolute',
+			backgroundColor: 'red',
+			opacity: '0.4',
+			pointerEvents: 'none',
+		}">
+			</div>
 		</div>
 	</div>
 	<div v-for="(overlay, index) in this.overlays" :key="index">
@@ -86,7 +103,8 @@ export default {
 			indexDraggedImg: NaN,
 			page_number: 1,
 			numberOfPages: NaN,
-			aspectRatio: NaN
+			aspectRatio: [],
+			realPoint: NaN
 		};
 	},
 	methods: {
@@ -120,22 +138,6 @@ export default {
 				viewport,
 			});
 			await renderTask.promise;
-
-			// // Draw all images on the canvas
-			// this.images.forEach((image) => {
-			// 	if (image.src) {
-			// 		const img = new Image();
-			// 		img.src = image.src;
-			// 		console.log(image.src + " " + image.x + " " + image.y);
-			// 		ctx.drawImage(
-			// 			img,
-			// 			image.x,
-			// 			image.y,
-			// 			image.size_x,
-			// 			image.size_y
-			// 		);
-			// 	}
-			// });
 		},
 
 		addOverlay() {
@@ -253,62 +255,50 @@ export default {
 			}
 		},
 
-		drawPoint(x, y) {
-			const ctx = this.$refs.canvas.getContext("2d");
-			ctx.beginPath();
-			ctx.arc(x, y, 5, 0, 2 * Math.PI);
-			ctx.fillStyle = "red";
-			ctx.fill();
-			ctx.closePath();
+		fitInnerShape(outer_width, outer_height, inner_aspectRatio) {
+			const outer_aspectRatio = outer_width / outer_height;
+
+			if (outer_aspectRatio > inner_aspectRatio) {
+				return {
+					width: outer_height * inner_aspectRatio,
+					height: outer_height
+				};
+			} else {
+				return {
+					width: outer_width,
+					height: outer_width / inner_aspectRatio
+				}
+			}
 		},
 
 		calculateRealPosition() {
 			const realPoint = [];
+
 			for (let i = 0; i < this.overlays.length; i++) {
 				const overlay = this.overlays[i];
-				const left = overlay.left.split(' ').map(value => parseInt(value, 10))[0];
-				const top = overlay.top.split(' ').map(value => parseInt(value, 10))[0];
-				const width = overlay.width.split(' ').map(value => parseInt(value, 10))[0];
-				const height = overlay.height.split(' ').map(value => parseInt(value, 10))[0];
-				const bottom = top + height;
-				const right = left + width;
-				const aspectRatio = overlay.aspectRatio;
+				const width = parseInt(overlay.width, 10);
+				const height = parseInt(overlay.height, 10);
 
-				console.log('left', left, 'top', top, 'width', width, 'height', height, 'bottom', bottom, 'right', right, 'aspectRatio', aspectRatio);
+				const shape = this.fitInnerShape(width, height, overlay.aspectRatio);
 
-				const mid = {
-					x: (left + right) / 2,
-					y: (top + bottom) / 2
-				};
+				const midX = parseInt(overlay.left, 10) + width / 2;
+				const midY = parseInt(overlay.top, 10) + height / 2;
 
-				// Calculate maximum rectangle that maintains the aspect ratio
-				let maxImageWidth, maxImageHeight;
-				const boxAspectRatio = width / height;
 
-				if (boxAspectRatio > aspectRatio) {
-					// The box is wider than the desired aspect ratio
-					maxImageWidth = width;
-					maxImageHeight = width / aspectRatio;
-				} else {
-					// The box is taller than the desired aspect ratio
-					maxImageHeight = height;
-					maxImageWidth = height * aspectRatio;
-				}
 
-				// Calculate left and top for the maximum rectangle
-				const imageSize = {
-					left: mid.x - maxImageWidth / 2,
-					top: mid.y - maxImageHeight / 2,
-					width: maxImageWidth,
-					height: maxImageHeight
-				};
-				this.drawPoint(imageSize.left, imageSize.top);
-				this.drawPoint(imageSize.left + imageSize.width, imageSize.top);
-				this.drawPoint(imageSize.left + imageSize.width, imageSize.top + imageSize.height);
-				this.drawPoint(imageSize.left, imageSize.top + imageSize.height);
-				realPoint.push(imageSize);
-				console.log(imageSize);
+				const newLeft = midX - shape.width / 2;
+				const newTop = midY - shape.height / 2;
+
+				realPoint.push({
+					'left': newLeft,
+					'top': newTop,
+					'width': shape.width,
+					'height': shape.height,
+				});
 			}
+
+			this.realPoint = realPoint;
+			console.log(this.realPoint);
 		},
 
 		handleMouseUp() {
