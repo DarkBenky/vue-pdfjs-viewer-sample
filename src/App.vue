@@ -1,8 +1,7 @@
-<!-- TODO: get number of pages and be able to move there -->
-
 <template>
 	<div>
-		<button @click="calculateRealPosition">test</button>
+		<!-- testing of image calculation -->
+		<!-- <button @click="calculateRealPosition">test</button> -->
 		<div>
 			<button @click="handlePrevious">Previous</button>
 			<button @click="handleNext">Next</button>
@@ -39,23 +38,23 @@
 		}">
 		</div>
 	</div>
-	<div v-if="this.realPoint">
+	<!-- <div v-if="this.realPoint"> -->
 		<!-- debugging of img position -->
-		<div v-for="(box, index) in this.realPoint" :key="index">
+		<!-- <div v-for="(box, index) in this.realPoint" :key="index"> -->
 			<!-- <p>{{ box }}</p> -->
-			<div :style="{
-			left: box.left + 'px',
-			top: box.top + 'px',
-			width: box.width + 'px',
-			height: box.height + 'px',
-			position: 'absolute',
-			backgroundColor: 'red',
-			opacity: '0.4',
-			pointerEvents: 'none',
-		}">
-			</div>
-		</div>
-	</div>
+			<!-- <div v-if="box.page === this.page_number" :style="{ -->
+			<!-- left: box.left + 'px', -->
+			<!-- top: box.top + 'px', -->
+			<!-- width: box.width + 'px', -->
+			<!-- height: box.height + 'px', -->
+			<!-- position: 'absolute', -->
+			<!-- backgroundColor: 'red', -->
+			<!-- opacity: '0.4', -->
+			<!-- pointerEvents: 'none', -->
+		<!-- }"> -->
+			<!-- </div> -->
+		<!-- </div> -->
+	<!-- </div> -->
 	<div v-for="(overlay, index) in this.overlays" :key="index">
 		<div v-if="overlay.page_number === this.page_number" :style="{
 			backgroundImage: 'url(' + overlay.low_res_img + ')',
@@ -85,7 +84,7 @@ export default {
 	components: {},
 	data() {
 		return {
-			pdfPath: "big-pdf.pdf",
+			pdfPath: "dummy.pdf",
 			images: [],
 			low_res_img: NaN,
 			overlays: [],
@@ -284,16 +283,24 @@ export default {
 				const midX = parseInt(overlay.left, 10) + width / 2;
 				const midY = parseInt(overlay.top, 10) + height / 2;
 
-
+				const canvas = this.$refs.canvas;
+				const rect = canvas.getBoundingClientRect();
+				const top = rect.top;
+				const left = rect.left;
 
 				const newLeft = midX - shape.width / 2;
 				const newTop = midY - shape.height / 2;
 
+				console.log('unedited top :', newTop, 'edited top', newTop - top);
+				console.log('unedited left :', newLeft, 'edited left', newLeft - left);
+
 				realPoint.push({
-					'left': newLeft,
-					'top': newTop,
+					'left': newLeft - left,
+					'top': newTop - top,
 					'width': shape.width,
 					'height': shape.height,
+					'img': overlay.img,
+					'page': overlay.page_number,
 				});
 			}
 
@@ -421,21 +428,9 @@ export default {
 			// Fetch the raw PDF data
 			this.fetchRawPdfData(this.pdfPath)
 				.then(rawDataUrl => {
-					// Once the data is fetched, construct the data object
-					let data_export = []
-					for (let i = 0; i < this.overlays.length; i++) {
-						let stripData = {
-							'left': this.overlays[i].left,
-							'top': this.overlays[i].top,
-							'width': this.overlays[i].width,
-							'height': this.overlays[i].height,
-							'image': this.overlays[i].img,
-							'pageNumber': this.overlays[i].page_number,
-						}
-						data_export.push(stripData)
-					}
+					this.calculateRealPosition();
 					let data = {
-						'Overlays': data_export,
+						'Overlays': this.realPoint,
 						'PdfFile': rawDataUrl,
 					};
 
