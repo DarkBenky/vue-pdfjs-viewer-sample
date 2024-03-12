@@ -10,7 +10,7 @@
 			<input id="pageNumber-input" type="number" />
 			<button @click="handlePageChange">Go to page</button>
 		</div>
-		<button @click="exportData">export</button>
+		<button @click="handlePost">export</button>
 	</div>
 	<div @mousemove="handleDragging" @mousedown="handleDraggingStop">
 		<h1>i am asking my self</h1>
@@ -23,47 +23,47 @@
 	</div>
 	<div v-for="(overlay, index) in this.overlays" :key="index">
 		<div v-if="overlay.page_number === this.page_number" @mousedown="handleDragStart(index)" :style="{
-			left: overlay.left,
-			top: overlay.top,
-			width: overlay.width,
-			height: overlay.height,
-			position: 'absolute',
-			backgroundImage: 'url(' + overlay.low_res_img + ')',
-			backgroundSize: 'contain',
-			backgroundRepeat: 'no-repeat',
-			backgroundPosition: 'center',
-			opacity: '0.4',
-			pointerEvents: overlay.pointerEvents,
-			border: overlay.border_color,
-		}">
+				left: overlay.left,
+				top: overlay.top,
+				width: overlay.width,
+				height: overlay.height,
+				position: 'absolute',
+				backgroundImage: 'url(' + overlay.low_res_img + ')',
+				backgroundSize: 'contain',
+				backgroundRepeat: 'no-repeat',
+				backgroundPosition: 'center',
+				opacity: '0.4',
+				pointerEvents: overlay.pointerEvents,
+				border: overlay.border_color,
+			}">
 		</div>
 	</div>
 	<!-- <div v-if="this.realPoint"> -->
-		<!-- debugging of img position -->
-		<!-- <div v-for="(box, index) in this.realPoint" :key="index"> -->
-			<!-- <p>{{ box }}</p> -->
-			<!-- <div v-if="box.page === this.page_number" :style="{ -->
-			<!-- left: box.left + 'px', -->
-			<!-- top: box.top + 'px', -->
-			<!-- width: box.width + 'px', -->
-			<!-- height: box.height + 'px', -->
-			<!-- position: 'absolute', -->
-			<!-- backgroundColor: 'red', -->
-			<!-- opacity: '0.4', -->
-			<!-- pointerEvents: 'none', -->
-		<!-- }"> -->
-			<!-- </div> -->
-		<!-- </div> -->
+	<!-- debugging of img position -->
+	<!-- <div v-for="(box, index) in this.realPoint" :key="index"> -->
+	<!-- <p>{{ box }}</p> -->
+	<!-- <div v-if="box.page === this.page_number" :style="{ -->
+	<!-- left: box.left + 'px', -->
+	<!-- top: box.top + 'px', -->
+	<!-- width: box.width + 'px', -->
+	<!-- height: box.height + 'px', -->
+	<!-- position: 'absolute', -->
+	<!-- backgroundColor: 'red', -->
+	<!-- opacity: '0.4', -->
+	<!-- pointerEvents: 'none', -->
+	<!-- }"> -->
+	<!-- </div> -->
+	<!-- </div> -->
 	<!-- </div> -->
 	<div v-for="(overlay, index) in this.overlays" :key="index">
 		<div v-if="overlay.page_number === this.page_number" :style="{
-			backgroundImage: 'url(' + overlay.low_res_img + ')',
-			backgroundSize: 'contain',
-			backgroundRepeat: 'no-repeat',
-			backgroundPosition: 'center',
-			height: '100px',
-			width: '100px'
-		}">
+				backgroundImage: 'url(' + overlay.low_res_img + ')',
+				backgroundSize: 'contain',
+				backgroundRepeat: 'no-repeat',
+				backgroundPosition: 'center',
+				height: '100px',
+				width: '100px'
+			}">
 			<button @click="handleEdit(index)">edit</button>
 			<div v-if="currentEdit === index">
 				<button @click="delete_image(index)">delete</button>
@@ -77,7 +77,7 @@
 <script>
 import * as pdfjsLib from "pdfjs-dist";
 import "pdfjs-dist/build/pdf.worker.mjs";
-import { saveAs } from 'file-saver';
+import axios from 'axios';
 
 export default {
 	name: "App",
@@ -141,7 +141,7 @@ export default {
 
 		addOverlay() {
 			this.overlay = true
-			console.log(this.overlay)
+			//console.log(this.overlay)
 		},
 
 		delete_image(index) {
@@ -200,7 +200,7 @@ export default {
 				// Use canvas coordinates for both starting and ending positions
 				const startX = this.dragStartX;
 				const startY = this.dragStartY;
-				// console.log(startX, startY, 'dragStartX', 'dragStartY',);
+				// //console.log(startX, startY, 'dragStartX', 'dragStartY',);
 				const endX = event.clientX;
 				const endY = event.clientY;
 
@@ -243,11 +243,11 @@ export default {
 			}
 		},
 		handleMouseDown(event) {
-			console.log('handleMouseDown');
+			//console.log('handleMouseDown');
 			// const canvas = event.target;
 			// const rect = canvas.getBoundingClientRect();
 			if (isNaN(this.currentImage) && this.overlay) {
-				console.log('handleMouseDown - True');
+				//console.log('handleMouseDown - True');
 				this.dragStartX = event.clientX;
 				this.dragStartY = event.clientY;
 				this.isDragging = true;
@@ -256,7 +256,6 @@ export default {
 
 		fitInnerShape(outer_width, outer_height, inner_aspectRatio) {
 			const outer_aspectRatio = outer_width / outer_height;
-
 			if (outer_aspectRatio > inner_aspectRatio) {
 				return {
 					width: outer_height * inner_aspectRatio,
@@ -291,8 +290,8 @@ export default {
 				const newLeft = midX - shape.width / 2;
 				const newTop = midY - shape.height / 2;
 
-				console.log('unedited top :', newTop, 'edited top', newTop - top);
-				console.log('unedited left :', newLeft, 'edited left', newLeft - left);
+				//console.log('unedited top :', newTop, 'edited top', newTop - top);
+				//console.log('unedited left :', newLeft, 'edited left', newLeft - left);
 
 				realPoint.push({
 					'left': newLeft - left,
@@ -305,7 +304,7 @@ export default {
 			}
 
 			this.realPoint = realPoint;
-			console.log(this.realPoint);
+			//console.log(this.realPoint);
 		},
 
 		handleMouseUp() {
@@ -324,7 +323,7 @@ export default {
 					'page_number': this.page_number,
 					'aspectRatio': this.aspectRatio,
 				});
-				console.log(this.overlays);
+				//console.log(this.overlays);
 				const redOverlay = this.$refs.redOverlay;
 				redOverlay.style.opacity = "0";
 				const BgOverlay = this.$refs.BgOverlay;
@@ -336,7 +335,7 @@ export default {
 			const y = this.overlays[index].height.split(' ').map(value => parseInt(value, 10));
 			this.overlays[index].width = parseInt((x * scale) + 1) + 'px';
 			this.overlays[index].height = parseInt((y * scale) + 1) + 'px';
-			// console.log(this.overlays[index].width, this.overlays[index].height);
+			// //console.log(this.overlays[index].width, this.overlays[index].height);
 		},
 		handleEdit(index) {
 			this.currentEdit = index;
@@ -350,7 +349,7 @@ export default {
 			if (this.currentEdit === index) {
 				this.dragging = !this.dragging;
 				this.indexDraggedImg = index;
-				console.log(this.indexDraggedImg);
+				//console.log(this.indexDraggedImg);
 				this.overlays[index].pointerEvents = 'none';
 			}
 		},
@@ -369,8 +368,8 @@ export default {
 			}
 		},
 		handleDraggingStop() {
-			console.log(this.dragging);
-			console.log(this.indexDraggedImg);
+			//console.log(this.dragging);
+			//console.log(this.indexDraggedImg);
 			if (this.dragging && !isNaN(this.indexDraggedImg)) {
 				this.dragging = false;
 				this.overlays[this.indexDraggedImg].pointerEvents = 'auto';
@@ -383,7 +382,7 @@ export default {
 				this.page_number++;
 				await this.file_load();
 			} catch (error) {
-				console.log(error);
+				//console.log(error);
 			}
 		},
 
@@ -394,7 +393,7 @@ export default {
 					await this.file_load();
 				}
 			} catch (error) {
-				console.log(error);
+				//console.log(error);
 			}
 
 		},
@@ -407,7 +406,7 @@ export default {
 				}
 
 				const rawData = await response.blob();
-				console.log(rawData);
+				//console.log(rawData);
 
 				// Convert Blob to data URL
 				const dataUrl = await new Promise((resolve) => {
@@ -422,26 +421,43 @@ export default {
 			}
 		},
 
-		exportData() {
-			console.log('export_data');
-
-			// Fetch the raw PDF data
-			this.fetchRawPdfData(this.pdfPath)
-				.then(rawDataUrl => {
-					this.calculateRealPosition();
-					let data = {
-						'Overlays': this.realPoint,
-						'PdfFile': rawDataUrl,
-					};
-
-					console.log(data);
-					// Save the data as a JSON file
-					let blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-					saveAs(blob, 'sample.json');
-				})
-				.catch(error => {
-					console.error('Error fetching raw PDF data:', error);
+		async handlePost() {
+			const apiUrl = 'http://127.0.0.1:5000/upload';
+			const data = await this.exportData();
+			try {
+				const response = await axios.post(apiUrl, data, {
+					headers: {
+						'Content-Type': 'application/json'
+					},
 				});
+
+				console.log(response.data);
+			} catch (error) {
+				console.error(error);
+			}
+		},
+
+		async exportData() {
+			try {
+				// Fetch the raw PDF data
+				const rawDataUrl = await this.fetchRawPdfData(this.pdfPath);
+
+				// Calculate real position
+				this.calculateRealPosition();
+
+				// Prepare and return the data object
+				let data = {
+					'Overlays': this.realPoint,
+					'PdfFile': rawDataUrl,
+				};
+
+				console.log('exportData', data);
+				return data;
+			} catch (error) {
+				console.error('Error fetching raw PDF data:', error);
+				// You might want to handle the error or return some default data in case of an error
+				return null;
+			}
 		},
 		async handlePageChange() {
 			let pageNumber = document.getElementById('pageNumber-input').value;
@@ -451,7 +467,7 @@ export default {
 					await this.file_load();
 				}
 			} catch (error) {
-				console.log(error);
+				//console.log(error);
 			}
 		}
 	},
