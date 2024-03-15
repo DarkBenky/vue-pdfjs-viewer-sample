@@ -65,7 +65,7 @@
 				width: '100px'
 			}">
 			<button @click="handleEdit(index)">edit</button>
-			<div v-if="currentEdit === index">
+			<div v-if="this.currentEdit === index">
 				<button @click="delete_image(index)">delete</button>
 				<button @click="handleScaling(index, 0.75)">-</button>
 				<button @click="handleScaling(index, 1.25)">+</button>
@@ -84,8 +84,7 @@ export default {
 	components: {},
 	data() {
 		return {
-			pdfPath: "dummy.pdf",
-			images: [],
+			pdfPath: "big-pdf.pdf",
 			low_res_img: NaN,
 			overlays: [],
 			offsetX: 0,
@@ -338,12 +337,22 @@ export default {
 			// //console.log(this.overlays[index].width, this.overlays[index].height);
 		},
 		handleEdit(index) {
-			this.currentEdit = index;
-			// Reset border_color for all overlays
-			this.overlays.forEach((overlay, i) => {
-				overlay.border_color = i === index ? '2px solid red' : 'none';
-				overlay.pointerEvents = i === index ? 'auto' : 'none';
-			});
+			if (index == this.currentEdit) {
+				this.currentEdit = NaN;
+				this.overlays.forEach((overlay) => {
+					overlay.border_color = 'none';
+					overlay.pointerEvents = 'none';
+				
+				});
+			}
+			else {
+				this.currentEdit = index;
+				// Reset border_color for all overlays
+				this.overlays.forEach((overlay, i) => {
+					overlay.border_color = i === index ? '2px solid red' : 'none';
+					overlay.pointerEvents = i === index ? 'auto' : 'none';
+				});
+			}
 		},
 		handleDragStart(index) {
 			if (this.currentEdit === index) {
