@@ -270,6 +270,7 @@ export default {
 
 		calculateRealPosition() {
 			const realPoint = [];
+			let wrong_position = false;
 
 			for (let i = 0; i < this.overlays.length; i++) {
 				const overlay = this.overlays[i];
@@ -285,12 +286,34 @@ export default {
 				const rect = canvas.getBoundingClientRect();
 				const top = rect.top;
 				const left = rect.left;
+				const widthCanvas = rect.width;
+				const heightCanvas = rect.height;
 
-				const newLeft = midX - shape.width / 2;
-				const newTop = midY - shape.height / 2;
+				let newLeft = midX - shape.width / 2;
+				let newTop = midY - shape.height / 2;
 
 				//console.log('unedited top :', newTop, 'edited top', newTop - top);
 				//console.log('unedited left :', newLeft, 'edited left', newLeft - left);
+
+				if (newLeft - left < 0) {
+					newLeft = 0;
+					wrong_position = true
+				}
+
+				if (newTop - top < 0) {
+					newTop = 0;
+					wrong_position = true
+				}
+
+				if (newLeft - left + shape.width > widthCanvas) {
+					newLeft = widthCanvas - shape.width;
+					wrong_position = true;
+				}
+
+				if (newTop - top + shape.height > heightCanvas) {
+					newTop = heightCanvas - shape.height;
+					wrong_position = true;
+				}
 
 				realPoint.push({
 					'left': newLeft - left,
@@ -300,6 +323,10 @@ export default {
 					'img': overlay.img,
 					'page': overlay.page_number,
 				});
+			}
+
+			if (wrong_position) {
+				console.log('wrong position');
 			}
 
 			this.realPoint = realPoint;
@@ -330,11 +357,36 @@ export default {
 			}
 		},
 		handleScaling(index, scale) {
-			const x = this.overlays[index].width.split(' ').map(value => parseInt(value, 10));
-			const y = this.overlays[index].height.split(' ').map(value => parseInt(value, 10));
-			this.overlays[index].width = parseInt((x * scale) + 1) + 'px';
-			this.overlays[index].height = parseInt((y * scale) + 1) + 'px';
-			// //console.log(this.overlays[index].width, this.overlays[index].height);
+			const canvas = this.$refs.canvas;
+			const rect = canvas.getBoundingClientRect();
+			const bottomCanvas = rect.hight + rect.top;
+			const rightCanvas = rect.right;
+
+			// Original dimensions
+			let originalWidth = parseInt(this.overlays[index].width, 10);
+			let originalHeight = parseInt(this.overlays[index].height, 10);
+			let x = parseInt(this.overlays[index].left, 10);
+			let y = parseInt(this.overlays[index].top, 10);
+
+			// Calculate scaled dimensions
+			let scaledWidth = originalWidth * scale;
+			let scaledHeight = originalHeight * scale;
+
+			// Calculate new bottom and right positions
+			let new_bottom = y + scaledHeight;
+			let new_right = x + scaledWidth;
+
+			// Check if the new positions exceed the canvas boundaries
+			if (new_bottom > bottomCanvas) {
+				scaledHeight = bottomCanvas - y;
+			}
+			if (new_right > rightCanvas) {
+				scaledWidth = rightCanvas - x;
+			}
+
+			// Update rectangle dimensions
+			this.overlays[index].width = scaledWidth + 'px';
+			this.overlays[index].height = scaledHeight + 'px';
 		},
 		handleEdit(index) {
 			if (index == this.currentEdit) {
@@ -342,7 +394,7 @@ export default {
 				this.overlays.forEach((overlay) => {
 					overlay.border_color = 'none';
 					overlay.pointerEvents = 'none';
-				
+
 				});
 			}
 			else {
