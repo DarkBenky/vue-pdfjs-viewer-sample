@@ -194,23 +194,21 @@ export default {
 		},
 		handleMouseMove(event) {
 			if (this.isDragging && this.overlay && this.currentImage) {
-				// const canvas = event.target;
-				// const rect = canvas.getBoundingClientRect();
+				const canvasRect = this.$refs.canvas.getBoundingClientRect();
 
-				// Use canvas coordinates for both starting and ending positions
 				const startX = this.dragStartX;
 				const startY = this.dragStartY;
-				// //console.log(startX, startY, 'dragStartX', 'dragStartY',);
-				const endX = event.clientX;
-				const endY = event.clientY;
 
-				const minX = Math.min(startX, endX);
-				const minY = Math.min(startY, endY);
-				const width = Math.abs(endX - startX);
-				const height = Math.abs(endY - startY);
+				// Calculate the maximum allowed positions for the bounding box
+				const maxX = Math.min(startX, canvasRect.right);
+				const maxY = Math.min(startY, canvasRect.bottom);
+				const minX = Math.max(0, Math.min(startX, event.clientX));
+				const minY = Math.max(0, Math.min(startY, event.clientY));
+				const width = Math.min(Math.abs(event.clientX - startX), canvasRect.right - maxX);
+				const height = Math.min(Math.abs(event.clientY - startY), canvasRect.bottom - maxY);
 
+				// Update the position and size of the bounding box overlay
 				const BgOverlay = this.$refs.BgOverlay;
-
 				BgOverlay.style.position = "absolute";
 				BgOverlay.style.left = `${minX}px`;
 				BgOverlay.style.top = `${minY}px`;
@@ -220,9 +218,8 @@ export default {
 				BgOverlay.style.opacity = "0.1";
 				BgOverlay.style.pointerEvents = 'none';
 
-				// Update the position of the red div overlay
+				// Update the position and size of the image overlay
 				const redOverlay = this.$refs.redOverlay;
-
 				redOverlay.style.position = "absolute";
 				redOverlay.style.left = `${minX}px`;
 				redOverlay.style.top = `${minY}px`;
@@ -419,15 +416,25 @@ export default {
 		},
 		handleDragging(event) {
 			if (this.dragging) {
+				let div = this.$refs[this.indexDraggedImg][0];
+				let style = window.getComputedStyle(div);
 				// get mouse position
 				let mouseX = event.clientX;
 				let mouseY = event.clientY;
 
+				// Calculate the maximum allowed positions for the image
+				let maxRight = this.$refs.canvas.getBoundingClientRect().right - parseFloat(style.width);
+				let maxBottom = this.$refs.canvas.getBoundingClientRect().bottom;
+
+				// Ensure the image does not go beyond the canvas boundaries
+				mouseX = Math.max(0, Math.min(mouseX, maxRight));
+				mouseY = Math.max(0, Math.min(mouseY, maxBottom));
+
 				// Schedule the update using requestAnimationFrame
 				requestAnimationFrame(() => {
 					// set new image position
-					this.overlays[this.indexDraggedImg].left = `${mouseX + 5}px`;
-					this.overlays[this.indexDraggedImg].top = `${mouseY + 5}px`;
+					this.overlays[this.indexDraggedImg].left = `${mouseX}px`;
+					this.overlays[this.indexDraggedImg].top = `${mouseY}px`;
 				});
 			}
 		},
