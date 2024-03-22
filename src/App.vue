@@ -22,7 +22,8 @@
 		<input type="file" ref="fileInput" accept="image/*" @change="handleFileChange" />
 	</div>
 	<div v-for="(overlay, index) in this.overlays" :key="index">
-		<div v-if="overlay.page_number === this.page_number" @mousedown="handleDragStart(index)" :style="{
+		<div :ref="overlay.ID" v-if="overlay.page_number === this.page_number" @mousedown="handleDragStart(index)"
+			:style="{
 				left: overlay.left,
 				top: overlay.top,
 				width: overlay.width,
@@ -348,6 +349,7 @@ export default {
 					'pointerEvents': 'none',
 					'page_number': this.page_number,
 					'aspectRatio': this.aspectRatio,
+					ID: this.overlays.length
 				});
 				//console.log(this.overlays);
 				const redOverlay = this.$refs.redOverlay;
@@ -356,38 +358,39 @@ export default {
 				BgOverlay.style.opacity = "0";
 			}
 		},
+
 		handleScaling(index, scale) {
-			const canvas = this.$refs.canvas;
-			const rect = canvas.getBoundingClientRect();
-			const bottomCanvas = rect.hight + rect.top;
-			const rightCanvas = rect.right;
+			let div = this.$refs[index][0];
+			let styles = window.getComputedStyle(div);
+			let right = parseFloat(styles.left) + parseFloat(styles.width); // Right edge position of the div
+			console.log('right:', right);
+			let bottom = parseFloat(styles.top) + parseFloat(styles.height); // Bottom edge position of the div
+			console.log('bottom:', bottom);
 
-			// Original dimensions
-			let originalWidth = parseInt(this.overlays[index].width, 10);
-			let originalHeight = parseInt(this.overlays[index].height, 10);
-			let x = parseInt(this.overlays[index].left, 10);
-			let y = parseInt(this.overlays[index].top, 10);
+			const canvasRect = this.$refs.canvas.getBoundingClientRect();
+			const canvasRight = canvasRect.right;
+			const canvasBottom = canvasRect.bottom; // Corrected canvas bottom calculation
+			console.log('canvasRight:', canvasRight);
+			console.log('canvasBottom:', canvasBottom);
 
-			// Calculate scaled dimensions
-			let scaledWidth = originalWidth * scale;
-			let scaledHeight = originalHeight * scale;
+			if (right * scale > canvasRight || bottom * scale > canvasBottom || bottom * scale < 0 || right * scale < 0) {
+				console.log('Point is outside the canvas');
 
-			// Calculate new bottom and right positions
-			let new_bottom = y + scaledHeight;
-			let new_right = x + scaledWidth;
+				// Calculate the difference between scaled canvas size and current div size
+				let dx = (canvasRight - right * scale);
+				let dy = (canvasBottom - bottom * scale);
 
-			// Check if the new positions exceed the canvas boundaries
-			if (new_bottom > bottomCanvas) {
-				scaledHeight = bottomCanvas - y;
-			}
-			if (new_right > rightCanvas) {
-				scaledWidth = rightCanvas - x;
+				// Adjust div dimensions
+				this.overlays[index].width = (parseFloat(styles.width) + dx / scale) + 'px';
+				this.overlays[index].height = (parseFloat(styles.height) + dy / scale) + 'px';
+				return;
 			}
 
 			// Update rectangle dimensions
-			this.overlays[index].width = scaledWidth + 'px';
-			this.overlays[index].height = scaledHeight + 'px';
+			this.overlays[index].width = (parseFloat(styles.width) * scale) + 'px';
+			this.overlays[index].height = (parseFloat(styles.height) * scale) + 'px';
 		},
+
 		handleEdit(index) {
 			if (index == this.currentEdit) {
 				this.currentEdit = NaN;
